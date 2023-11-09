@@ -7,7 +7,7 @@ namespace hopfield_network
     {
         public double[,] matrixData;
         public int RowCount => matrixData.GetLength(0);
-        public int CoulumnCount => matrixData.GetLength(1);
+        public int ColumnCount => matrixData.GetLength(1);
         public Matrix(double[,] matrix)
         {
             matrixData = matrix;
@@ -19,10 +19,7 @@ namespace hopfield_network
             int rB = b.matrixData.GetLength(0);
             int cB = b.matrixData.GetLength(1);
 
-            if (cA != rB)
-            {
-                throw new Exception("Matrixes can't be multiplied!!");
-            }
+            if (cA != rB){throw new Exception("Matrixes can't be multiplied!!");}
 
             double temp = 0;
             double[,] ret = new double[rA, cB];
@@ -42,13 +39,30 @@ namespace hopfield_network
 
             return new Matrix(ret);
         }
+
+        public static Matrix operator *(double a, Matrix b)
+        {
+            int rB = b.matrixData.GetLength(0);
+            int cB = b.matrixData.GetLength(1);
+            double[,] ret = new double[rB, cB];
+
+            for (int i = 0; i < rB; i++)
+            {
+                for (int j = 0; j < cB; j++)
+                {
+                    ret[i, j] = b.matrixData[i,j] * a;
+                }
+            }
+
+            return new Matrix(ret);
+        }
         public Matrix Transpose()
         {
-            double[,] transposedMatrix = new double[CoulumnCount, RowCount];
+            double[,] transposedMatrix = new double[ColumnCount, RowCount];
 
             for (int i = 0; i < RowCount; i++)
             {
-                for (int j = 0; j < CoulumnCount; j++)
+                for (int j = 0; j < ColumnCount; j++)
                 {
                     transposedMatrix[j, i] = matrixData[i, j];
                 }
@@ -57,18 +71,40 @@ namespace hopfield_network
         }
         public override string ToString()
         {
+            return ToString(RowCount);
+        }
+
+        public string ToString(int rowLength)
+        {
             StringBuilder sb = new();
-            for (int i = 0; i < CoulumnCount; i++)
+            int count = 0;
+            for (int i = 0; i < RowCount; i++)
             {
-                for (int j = 0; j < RowCount; j++)
+                for (int j = 0; j < ColumnCount; j++)
                 {
-                    sb.Append(matrixData[i, j]+" ");
+                    count++;
+                    sb.Append(matrixData[i, j].ToString("N2").PadLeft(5) + " ");
+                    if (count == rowLength)
+                    {
+                        sb.AppendLine();
+                        count = 0;
+                    }
                 }
-                sb.AppendLine();
             }
             return sb.ToString();
         }
+        public Matrix NullDiagonal()
+        {
+            if (RowCount != ColumnCount) { throw new Exception("Column count must be equal Row count"); }
+            double[,] ret = (double[,])matrixData.Clone();
 
+            for (int i = 0; i < RowCount; i++)
+            {
+                ret[i, i] = 0;
+            }
+
+            return new Matrix(ret);
+        }
         public Matrix InverseMatrix()
         {
             int n = matrixData.GetLength(0);
@@ -88,6 +124,11 @@ namespace hopfield_network
             for (int i = 0; i < n; i++)
             {
                 double pivot = augmentedMatrix[i, i];
+                if (pivot==0)
+                {
+                    continue;
+                }
+
 
                 for (int j = 0; j < 2 * n; j++)
                 {
@@ -121,6 +162,19 @@ namespace hopfield_network
             return new Matrix(inverseMatrix);
         }
 
+        public Matrix Apply(Func<double, double> funk) { 
+            double[,] ret = new double[RowCount, ColumnCount];
+
+            for (int i = 0; i < RowCount; i++)
+            {
+                for (int j = 0; j < ColumnCount; j++)
+                {
+                    ret[i, j] = funk(matrixData[i,j]);
+                }
+            }
+
+            return new Matrix(ret);
+        }
 
     }
 }
