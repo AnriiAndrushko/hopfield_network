@@ -1,13 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
+﻿using System.Text;
 
-namespace hopfield_network
+namespace hopfield_network.Matrix
 {
     internal class Matrix
     {
         public double[,] matrixData;
-        public int RowCount => matrixData.GetLength(0);
-        public int ColumnCount => matrixData.GetLength(1);
+        public int Height => matrixData.GetLength(0);
+        public int Width => matrixData.GetLength(1);
         public Matrix(double[,] matrix)
         {
             matrixData = matrix;
@@ -40,6 +39,26 @@ namespace hopfield_network
             return new Matrix(ret);
         }
 
+        public static Matrix operator +(Matrix a, Matrix b)
+        {
+
+            int rA = a.matrixData.GetLength(0);
+            int cA = a.matrixData.GetLength(1);
+            int rB = b.matrixData.GetLength(0);
+            int cB = b.matrixData.GetLength(1);
+            double[,] ret = new double[rB, cB];
+
+            for (int i = 0; i < rB; i++)
+            {
+                for (int j = 0; j < cB; j++)
+                {
+                    ret[i, j] = a.matrixData[i, j];
+                    ret[i, j] += b.matrixData[i, j];
+                }
+            }
+
+            return new Matrix(ret);
+        }
         public static Matrix operator *(double a, Matrix b)
         {
             int rB = b.matrixData.GetLength(0);
@@ -58,11 +77,11 @@ namespace hopfield_network
         }
         public Matrix Transpose()
         {
-            double[,] transposedMatrix = new double[ColumnCount, RowCount];
+            double[,] transposedMatrix = new double[Width, Height];
 
-            for (int i = 0; i < RowCount; i++)
+            for (int i = 0; i < Height; i++)
             {
-                for (int j = 0; j < ColumnCount; j++)
+                for (int j = 0; j < Width; j++)
                 {
                     transposedMatrix[j, i] = matrixData[i, j];
                 }
@@ -71,16 +90,16 @@ namespace hopfield_network
         }
         public override string ToString()
         {
-            return ToString(RowCount);
+            return ToString(Height);
         }
 
         public string ToString(int rowLength)
         {
             StringBuilder sb = new();
             int count = 0;
-            for (int i = 0; i < RowCount; i++)
+            for (int i = 0; i < Height; i++)
             {
-                for (int j = 0; j < ColumnCount; j++)
+                for (int j = 0; j < Width; j++)
                 {
                     count++;
                     sb.Append(matrixData[i, j].ToString("N2").PadLeft(5) + " ");
@@ -95,10 +114,10 @@ namespace hopfield_network
         }
         public Matrix NullDiagonal()
         {
-            if (RowCount != ColumnCount) { throw new Exception("Column count must be equal Row count"); }
+            if (Height != Width) { throw new Exception("Column count must be equal Row count"); }
             double[,] ret = (double[,])matrixData.Clone();
 
-            for (int i = 0; i < RowCount; i++)
+            for (int i = 0; i < Height; i++)
             {
                 ret[i, i] = 0;
             }
@@ -163,11 +182,11 @@ namespace hopfield_network
         }
 
         public Matrix Apply(Func<double, double> funk) { 
-            double[,] ret = new double[RowCount, ColumnCount];
+            double[,] ret = new double[Height, Width];
 
-            for (int i = 0; i < RowCount; i++)
+            for (int i = 0; i < Height; i++)
             {
-                for (int j = 0; j < ColumnCount; j++)
+                for (int j = 0; j < Width; j++)
                 {
                     ret[i, j] = funk(matrixData[i,j]);
                 }
